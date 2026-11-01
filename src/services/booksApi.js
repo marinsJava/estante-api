@@ -1,56 +1,19 @@
-import { createBook, updateBook, removeBook } from './bookService.js';
+import { request } from './http.js';
 
-const STORAGE_KEY = 'estante:books';
-const LATENCY_MS = 700;
-const FAIL_LOAD = false;
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
-const SEED = [
-    { id: 'seed-1', title: 'Grande Sertão: Veredas', author: 'João Guimarães Rosa', status: 'lendo', rating: 0 },
-    { id: 'seed-2', title: 'Dom Casmurro', author: 'Machado de Assis', status: 'lido', rating: 5 },
-    { id: 'seed-3', title: 'A Hora da Estrela', author: 'Clarice Lispector', status: 'quero-ler', rating: 0 },
-];
+// Aceita objeto completo (POST) ou parcial (PATCH): só inclui o que veio
+const toPayload = ({ title, author, status, rating }) => ({
+  ...(title !== undefined && { title: title.trim() }),
+  ...(author !== undefined && { author: author.trim() }),
+  ...(status !== undefined && { status }),
+  ...(rating !== undefined && { rating: Number(rating) || 0 }),
+});
 
-const read = () => {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? SEED;
-    } catch {
-        return SEED;
-    }
-};
-const write = (books) => localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
-
-const request = (work, { title = '' } = {}) =>
-    new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (title.toLowerCase().includes('[erro]')) {
-                reject(new Error('o servidor recusou a operação.'));
-                return;
-            }
-            resolve(work());
-        }, LATENCY_MS);
-    });
-
-export const listBooks = () =>
-    new Promise((resolve, reject) =>
-        setTimeout(() => (FAIL_LOAD ? reject(new Error('sem conexão com o servidor.')) : resolve(read())), LATENCY_MS)
-    );
-
+export const fetchBooks = (signal) => request(`${BASE_URL}/books?_sort=id&_order=desc`, { signal });
+export const fetchBook = (id, signal) => request(`${BASE_URL}/books/${id}`, { signal });
 export const createBookRequest = (data) =>
-    request(() => {
-        const [created, ...rest] = createBook(read(), data);
-        write([created, ...rest]);
-        return created;
-    }, data);
-
+  request(`${BASE_URL}/books`, { method: 'POST', body: toPayload(data) });
 export const updateBookRequest = (id, changes) =>
-    request(() => {
-        const next = updateBook(read(), id, changes);
-        write(next);
-        return next.find((book) => book.id === id);
-    }, changes);
-
-export const removeBookRequest = (id) =>
-    request(() => {
-        write(removeBook(read(), id));
-        return id;
-    });
+  request(`${BASE_URL}/books/${id}`, { method: 'PATCH', body: toPayload(changes) });
+export const removeBookRequest = (id) => request(`${BASE_URL}/books/${id}`, { method: 'DELETE' });

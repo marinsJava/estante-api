@@ -1,63 +1,40 @@
-import { useMemo, useState } from 'react';
-import BookForm from './components/BookForm.jsx';
-import BookTable from './components/BookTable.jsx';
-import SearchBar from './components/SearchBar.jsx';
-import { BooksProvider, useBooks } from './context/BooksContext.jsx';
-import { ToastProvider } from './context/ToastContext.jsx';
-import { STATUS_LABEL, countByStatus } from './services/bookService.js';
+import { Suspense, lazy } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import Layout from './components/Layout.jsx';
+import PrivateRoute from './components/PrivateRoute.jsx';
+import BookDetailsPage from './pages/BookDetailsPage.jsx';
+import BookFormPage from './pages/BookFormPage.jsx';
+import DiscoverPage from './pages/DiscoverPage.jsx';
+import LibraryPage from './pages/LibraryPage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 
-const Shell = () => {
-  const { books, status, editing } = useBooks();
-  const [filter, setFilter] = useState('todos');
-  const [query, setQuery] = useState('');
-
-  const counts = useMemo(() => countByStatus(books), [books]);
-  const filters = [
-    ['todos', 'Todos', books.length],
-    ...Object.entries(STATUS_LABEL).map(([key, label]) => [key, label, counts[key] ?? 0]),
-  ];
-
-  return (
-      <main className="app">
-        <header className="app__header">
-          <h1>Estante</h1>
-          <p>Os livros que você quer ler, está lendo e já leu.</p>
-        </header>
-
-        <div className="app__layout">
-          <aside className="panel">
-            <BookForm key={editing?.id ?? 'new'} />
-          </aside>
-
-          <section className="panel">
-            <SearchBar onSearch={setQuery} />
-            <nav className="filters" aria-label="Filtrar por situação">
-              {filters.map(([key, label, count]) => (
-                  <button
-                      key={key}
-                      type="button"
-                      className={`filter ${filter === key ? 'is-active' : ''}`}
-                      aria-pressed={filter === key}
-                      onClick={() => setFilter(key)}
-                  >
-                    {label}
-                    {status === 'ready' && <span>{count}</span>}
-                  </button>
-              ))}
-            </nav>
-            <BookTable filter={filter} query={query} />
-          </section>
-        </div>
-      </main>
-  );
-};
+const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
 
 const App = () => (
-    <ToastProvider>
-      <BooksProvider>
-        <Shell />
-      </BooksProvider>
-    </ToastProvider>
+  <Routes>
+    <Route element={<Layout />}>
+      <Route index element={<LibraryPage />} />
+      <Route path="livros/novo" element={<BookFormPage />} />
+      <Route path="livros/:id" element={<BookDetailsPage />} />
+      <Route path="livros/:id/editar" element={<BookFormPage />} />
+      <Route path="descobrir" element={<DiscoverPage />} />
+      <Route path="login" element={<LoginPage />} />
+
+      <Route element={<PrivateRoute />}>
+        <Route
+          path="admin"
+          element={
+            <Suspense fallback={<p className="state" aria-busy="true"><span className="spinner" aria-hidden="true" />Carregando painel…</p>}>
+              <AdminPage />
+            </Suspense>
+          }
+        />
+      </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
+    </Route>
+  </Routes>
 );
 
 export default App;
