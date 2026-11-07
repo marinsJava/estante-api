@@ -1,7 +1,25 @@
 {
   "books": [
-    { "id": 1, "title": "Grande Sertão: Veredas", "author": "João Guimarães Rosa", "status": "lendo", "rating": 0 },
-    { "id": 2, "title": "Dom Casmurro", "author": "Machado de Assis", "status": "lido", "rating": 5 },
-    { "id": 3, "title": "A Hora da Estrela", "author": "Clarice Lispector", "status": "quero-ler", "rating": 0 }
+    {
+      "id": 1,
+      "title": "Grande Sertão: Veredas",
+      "author": "João Guimarães Rosa",
+      "status": "lendo",
+      "rating": 0
+    },
+    {
+      "id": 2,
+      "title": "Dom Casmurro",
+      "author": "Machado de Assis",
+      "status": "lido",
+      "rating": 5
+    },
+    {
+      "id": 3,
+      "title": "A Hora da Estrela",
+      "author": "Clarice Lispector",
+      "status": "quero-ler",
+      "rating": 0
+    }
   ]
 }
